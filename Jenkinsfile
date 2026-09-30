@@ -16,7 +16,7 @@ node {
         // 4. Bouw de Docker-image van de .NET-applicatie vanuit de TodoApp map
         sh 'docker build -t todoapp-image ./TodoApp'
         
-        // 5. Start de .NET-applicatie container gekoppeld aan de database
-        sh 'docker run -d --name todoapp --net todo-net -p 8080:8080 -e ConnectionStrings__TodoDb="Server=todoappdb;Port=3306;Database=todo_db;User=todo_usr;Password=letmeinplz;" -e ASPNETCORE_ENVIRONMENT=Development todoapp-image'
+        // 5. Start de .NET-applicatie op poort 8081 i.p.v. 8080 (om conflict met Jenkins te vermijden)
+        sh 'docker run -d --name todoapp --net todo-net -p 8081:8080 -e ConnectionStrings__TodoDb="Server=todoappdb;Port=3306;Database=todo_db;User=todo_usr;Password=letmeinplz;" -e ASPNETCORE_ENVIRONMENT=Development todoapp-image'
     }
 }
