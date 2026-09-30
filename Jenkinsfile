@@ -4,8 +4,8 @@ node {
     }
     
     stage('Run Unit Tests') {
-        // Geef het .slnx oplossingsbestand expliciet mee
-        sh 'docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:10.0 dotnet test dotnet-demo.slnx'
+        // Voer de tests uit op het specifieke testproject
+        sh 'docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:10.0 dotnet test TodoApp.Tests/TodoApp.Tests.csproj'
     }
     
     stage('Build and Deploy') {
