@@ -4,8 +4,8 @@ node {
     }
     
     stage('Run Unit Tests') {
-        // Voer de xUnit tests uit via een tijdelijke .NET 10 SDK container
-        sh 'docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:10.0 dotnet test'
+        // Geef het .slnx oplossingsbestand expliciet mee
+        sh 'docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:10.0 dotnet test dotnet-demo.slnx'
     }
     
     stage('Build and Deploy') {
