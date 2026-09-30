@@ -11,14 +11,19 @@ node {
         // 2. Maak een Docker-netwerk aan
         sh 'docker network create todo-net || true'
         
-        // 3. Start de MariaDB database container (zonder problematische file mount)
+        // 3. Start de MariaDB database container
         sh 'docker run -d --name todoappdb --net todo-net -e MARIADB_ROOT_PASSWORD=sekrit -e MARIADB_DATABASE=todo_db -e MARIADB_USER=todo_usr -e MARIADB_PASSWORD=letmeinplz -p 3306:3306 mariadb:11'
         
-        // 4. Wacht even tot MariaDB volledig is opgestart
-        sh 'sleep 10'
+        // 4. Wacht tot MariaDB klaar is om verbindingen te accepteren via TCP
+        sh '''
+            echo "Wachten tot MariaDB gereed is..."
+            until docker exec todoappdb mariadb-admin ping -h 127.0.0.1 -utodo_usr -pletmeinplz --silent; do
+                sleep 2
+            done
+        '''
         
-        // 5. Initialiseer de database met schema.sql vanuit de workspace via docker exec
-        sh 'docker exec -i todoappdb mariadb -h localhost -utodo_usr -pletmeinplz todo_db < TodoApp/schema.sql'
+        // 5. Initialiseer de database met schema.sql via TCP (--protocol=tcp)
+        sh 'docker exec -i todoappdb mariadb --protocol=tcp -h 127.0.0.1 -utodo_usr -pletmeinplz todo_db < TodoApp/schema.sql'
         
         // 6. Bouw de Docker-image van de .NET-applicatie
         sh 'docker build -t todoapp-image ./TodoApp'
