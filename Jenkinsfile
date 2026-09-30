@@ -2,8 +2,26 @@ node {
     stage('Checkout') {
         checkout scm
     }
+    
+    stage('Run Unit Tests') {
+        // Voer de xUnit tests uit via een tijdelijke .NET 10 SDK container
+        sh 'docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:10.0 dotnet test'
+    }
+    
     stage('Build and Deploy') {
-        sh 'docker compose down || true'
-        sh 'docker compose up -d --build'
+        // 1. Ruim oude containers op als die er nog zijn
+        sh 'docker rm -f todoapp todoappdb || true'
+        
+        // 2. Maak een Docker-netwerk aan
+        sh 'docker network create todo-net || true'
+        
+        // 3. Start de MariaDB database container
+        sh 'docker run -d --name todoappdb --net todo-net -e MARIADB_ROOT_PASSWORD=sekrit -e MARIADB_DATABASE=todo_db -e MARIADB_USER=todo_usr -e MARIADB_PASSWORD=letmeinplz -p 3306:3306 mariadb:11'
+        
+        // 4. Bouw de Docker-image van de .NET-applicatie
+        sh 'docker build -t todoapp-image ./TodoApp'
+        
+        // 5. Start de .NET-applicatie container gekoppeld aan de database
+        sh 'docker run -d --name todoapp --net todo-net -p 8080:8080 -e ConnectionStrings__TodoDb="Server=todoappdb;Port=3306;Database=todo_db;User=todo_usr;Password=letmeinplz;" -e ASPNETCORE_ENVIRONMENT=Development todoapp-image'
     }
 }
