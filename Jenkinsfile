@@ -6,7 +6,7 @@ node {
     stage('Build and Deploy') {
         // 1. Ruim oude containers en volumes op
         sh 'docker rm -f todoapp todoappdb || true'
-        sh 'docker volume rm mariadb-data || true'
+       
         
         // 2. Maak een Docker-netwerk aan
         sh 'docker network create todo-net || true'
