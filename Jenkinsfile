@@ -40,9 +40,12 @@ node {
             // Installeer sshpass in de Jenkins container om wachtwoorden te kunnen meesturen met scp
             sh 'apt-get update && apt-get install -y sshpass || true'
             
-            // Publish de .NET applicatie lokaal
-            // (Let op: als de Jenkins-container geen dotnet SDK heeft, moet je deze bestanden uit de Docker-image halen)
-            sh 'dotnet publish TodoApp/TodoApp.csproj -c Release -o ./publish'
+            // Haal de gepubliceerde bestanden direct uit onze zojuist gebouwde Docker-image!
+            sh 'docker rm -f temp-publisher || true'
+            sh 'docker create --name temp-publisher todoapp-image'
+            sh 'mkdir -p ./publish'
+            sh 'docker cp temp-publisher:/app/. ./publish/'
+            sh 'docker rm temp-publisher'
             
             // Kopieer de bestanden veilig naar dmz010 zonder handmatige wachtwoordprompt
             sh 'sshpass -p $SSH_PASS scp -o StrictHostKeyChecking=no -r ./publish/* $SSH_USER@192.0.2.10:/var/www/html/'
