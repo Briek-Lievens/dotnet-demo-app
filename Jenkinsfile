@@ -47,8 +47,11 @@ node {
             sh 'docker cp temp-publisher:/app/. ./publish/'
             sh 'docker rm temp-publisher'
             
-            // Kopieer de bestanden veilig naar dmz010 zonder handmatige wachtwoordprompt
-            sh 'sshpass -p $SSH_PASS scp -o StrictHostKeyChecking=no -r ./publish/* $SSH_USER@192.0.2.10:/var/www/html/'
+            // 1. Kopieer de bestanden eerst naar de home-directory van vagrant op dmz010 (daar zijn wel rechten voor)
+            sh 'sshpass -p $SSH_PASS scp -o StrictHostKeyChecking=no -r ./publish/* $SSH_USER@192.0.2.10:/home/vagrant/publish_temp/'
+            
+            // 2. Verplaats de bestanden met sudo naar /var/www/html/ en geef er de juiste rechten op
+            sh 'sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no $SSH_USER@192.0.2.10 "sudo mkdir -p /var/www/html && sudo rm -rf /var/www/html/* && sudo mv /home/vagrant/publish_temp/* /var/www/html/ && sudo chown -R www-data:www-data /var/www/html/"'
         }
     }
 }
