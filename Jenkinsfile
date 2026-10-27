@@ -34,11 +34,18 @@ node {
     }
 
     stage('Deploy Production') {
-        // Publish de .NET applicatie lokaal in de build container/server
-        sh 'dotnet publish TodoApp/TodoApp.csproj -c Release -o ./publish'
-        
-        // Kopieer de bestanden naar de productie-webserver (dmz010)
-        // (Zorg dat de SSH-sleutel van Jenkins bekend is op dmz010, of gebruik de juiste vagrant-gebruiker)
-        sh 'scp -o StrictHostKeyChecking=no -r ./publish/* vagrant@192.0.2.10:/var/www/html/'
+        // Koppel de credentials uit JCasC (dmz010-ssh-cred) aan variabelen SSH_USER en SSH_PASS
+        withCredentials([usernamePassword(credentialsId: 'dmz010-ssh-cred', passwordVariable: 'SSH_PASS', usernameVariable: 'SSH_USER')]) {
+            
+            // Installeer sshpass in de Jenkins container om wachtwoorden te kunnen meesturen met scp
+            sh 'apt-get update && apt-get install -y sshpass || true'
+            
+            // Publish de .NET applicatie lokaal
+            // (Let op: als de Jenkins-container geen dotnet SDK heeft, moet je deze bestanden uit de Docker-image halen)
+            sh 'dotnet publish TodoApp/TodoApp.csproj -c Release -o ./publish'
+            
+            // Kopieer de bestanden veilig naar dmz010 zonder handmatige wachtwoordprompt
+            sh 'sshpass -p $SSH_PASS scp -o StrictHostKeyChecking=no -r ./publish/* $SSH_USER@192.0.2.10:/var/www/html/'
+        }
     }
 }
